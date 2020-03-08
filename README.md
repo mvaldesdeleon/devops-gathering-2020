@@ -17,9 +17,20 @@
 
 Log into our [AWS Workshop Portal](https://dashboard.eventengine.run/login) with the participant hashcode provided, and set your name. You can get information on how to access the AWS Console by clicking on the "AWS Console" button.
 
-## Deploy the Kubernetes Dashboard
+## Notes and corrections
 
-### Deploy the Kubernetes Metrics Server
+Some of the modules' instructions will need to be updated. Please refer to this section before starting each module, and review the notes. For the [Deploy the Kubernetes Dashboard](#deploy-the-kubernetes-dashboard), please use the steps outlined here instead of the Workshop instructions. The same applies to the [Install Weave Flux](#install-weave-flux) sub-section of the GitOps with Weave Flux module.
+
+### Quick links
+* [Deploy the Kubernetes Dashboard](#deploy-the-kubernetes-dashboard)
+* [Helm](#helm)
+* [Autoscaling our Applications and Clusters](#autoscaling-our-applications-and-clusters)
+* [Intro to RBAC](#intro-to-rbac)
+* [GitOps with Weave Flux](#gitops-with-weave-flux)
+
+### Deploy the Kubernetes Dashboard
+
+#### Deploy the Kubernetes Metrics Server
 
 Download and deploy the `metrics-server`:
 
@@ -46,7 +57,7 @@ NAME             DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
 metrics-server   1         1         1            1           56m
 ```
 
-### Deploy the Dashboard
+#### Deploy the Dashboard
 
 Use the following command to deploy the Kubernetes dashboard:
 
@@ -73,7 +84,7 @@ service/dashboard-metrics-scraper created
 deployment.apps/dashboard-metrics-scraper created
 ```
 
-### Create an eks-admin Service Account and Cluster Role Binding
+#### Create an eks-admin Service Account and Cluster Role Binding
 
 By default, the Kubernetes dashboard user has limited permissions. In this section, you create an eks-admin service account and cluster role binding that you can use to securely connect to the dashboard with admin-level permissions. For more information, see [Managing Service Accounts](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) in the Kubernetes documentation.
 
@@ -115,7 +126,7 @@ serviceaccount "eks-admin" created
 clusterrolebinding.rbac.authorization.k8s.io "eks-admin" created
 ```
 
-### Connect to the Dashboard
+#### Connect to the Dashboard
 
 Now that the Kubernetes dashboard is deployed to your cluster, and you have an administrator service account that you can use to view and control your cluster, you can connect to the dashboard with that service account.
 
@@ -169,18 +180,13 @@ If you want to see the dashboard in a full tab, click the Pop Out button, like b
 
 ![Screenshot of the "Popout" button](https://eksworkshop.com/images/popout.png)
 
-### References
-
-* [Amazon EKS User Guide - Tutorial: Deploy the Kubernetes Web UI (Dashboard)](https://docs.aws.amazon.com/eks/latest/userguide/dashboard-tutorial.html)
-* [Kubernetes Documentation - Web UI (Dashboard)](https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/)
-
-## Helm
+### Helm
 
 Note that the output of `helm install` and `helm status` changed in Helm 3.x, and no longer lists the resources created.
 
 Also keep in mind that `helm` respects namespaces. You can specify the namespace with `-n <namespace>` or use `-a` to specify all namespaces.
 
-## Autoscaling our Applications and Clusters
+### Autoscaling our Applications and Clusters
 
 The [Deploy the Metrics Server](https://eksworkshop.com/beginner/080_scaling/deploy_hpa/#deploy-the-metrics-server) section should be skipped, as the Metrics Server was installed while deploying the Dashboard.
 
@@ -192,25 +198,17 @@ helm -n metrics uninstall metrics-server
 kubectl delete ns metrics
 ```
 
-### References
-* [Kubernetes Documentation - Horizontal Pod Autoscaler Walkthrough](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale-walkthrough/)
-
-## Intro to RBAC
+### Intro to RBAC
 
 Make sure you change your working directory to `~/environment` before starting this module.
 
-## IAM Roles for Service Accounts
+### GitOps with Weave Flux
 
-### References
-* [Kubernetes Documentation - Managing Service Accounts](https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin/)
-
-## GitOps with Weave Flux
-
-### GitHub Setup
+#### GitHub Setup
 
 **Tip: Keep the Personal Access Token handy. Later in this module you will need to push changes back to GitHub, and this Personal Access Token can be used instead of your password. This will also bypass 2FA, if you have enabled it.**
 
-### Install Weave Flux
+#### Install Weave Flux
 
 Now we will use Helm to install Weave Flux into our cluster and enable it to interact with our Kubernetes configuration GitHub repo.
 
@@ -274,17 +272,17 @@ Copy the provided key and add that as a deploy key in the GitHub repository.
 
 Now Flux is configured and should be ready to pull configuration.
 
-### Deploy from Manifests
+#### Deploy from Manifests
 
 After creating the workloads manifest file, `k8s-config/workloads/eks-example-dep.yaml`, in addition to replacing `YOURACCOUNT` and `YOURTAG` in the image URI, the current region (`us-east-1`) will also need to be updated to the workshop region, `eu-central-1`. If you fetch the URL directly from the Amazon ECR Console, then it will already have the correct value.
 
 Also, when making a change to the eks-example source code, there is no need to use `vi` and make the changes from the termina. You can navigate to the file within Cloud9 and edit it using the integrated editor.
 
-### Deploy from Helm
+#### Deploy from Helm
 
 After creating the Helm release manifest file, `k8s-config/releases/nginx.yaml`, the `apiVersion` will need to be updated to `helm.fluxcd.io/v1`.
 
-### Cleanup
+#### Cleanup
 
 To properly delete the kubernetes resources created, use the following commands instead:
 
@@ -300,3 +298,19 @@ kubectl delete svc eks-example -n eks-example
 kubectl delete deployment eks-example -n eks-example
 kubectl delete namespace eks-example
 ```
+
+## References
+
+### Deploy the Kubernetes Dashboard
+* [Amazon EKS User Guide - Tutorial: Deploy the Kubernetes Web UI (Dashboard)](https://docs.aws.amazon.com/eks/latest/userguide/dashboard-tutorial.html)
+* [Kubernetes Documentation - Web UI (Dashboard)](https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/)
+
+### Autoscaling our Applications and Clusters
+* [Kubernetes Documentation - Horizontal Pod Autoscaler Walkthrough](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale-walkthrough/)
+
+### IAM Roles for Service Accounts
+* [Kubernetes Documentation - Managing Service Accounts](https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin/)
+
+### GitOps with Weave Flux
+* [Flux Documentation - Get started with Flux using Helm](https://docs.fluxcd.io/en/1.18.0/tutorials/get-started-helm.html)
+* [Flux Helm Operator Readme](https://github.com/fluxcd/helm-operator/blob/master/chart/helm-operator/README.md)
