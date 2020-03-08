@@ -174,6 +174,8 @@ Now we can access the Kubernetes Dashboard. In your Cloud9 environment, click **
 api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/#!/login
 ```
 
+**Tip: Some browsers might block the Preview from loading. If that is your case, you can try disabling any ad blockers, or switching to either Chrome or Firefox.**
+
 Select "Token" and paste the authentication token retrieved previously.
 
 If you want to see the dashboard in a full tab, click the Pop Out button, like below:
