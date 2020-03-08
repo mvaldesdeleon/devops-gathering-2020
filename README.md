@@ -299,6 +299,10 @@ kubectl delete deployment eks-example -n eks-example
 kubectl delete namespace eks-example
 ```
 
+## Feedback
+
+Your feedback is very important, as it helps us improve. Please take a couple of minutes to complete the following [survey](http://bit.ly/39APZ4P) and let us know what you thought of the workshop.
+
 ## References
 
 ### Deploy the Kubernetes Dashboard
