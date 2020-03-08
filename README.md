@@ -15,7 +15,7 @@
 
 ## AWS Workshop Portal
 
-Log into our AWS Workshop Portal with the participant hashcode provided, and set your name. You can get information on how to access the AWS Console by clicking on the "AWS Console" button.
+Log into our [AWS Workshop Portal](https://dashboard.eventengine.run/login) with the participant hashcode provided, and set your name. You can get information on how to access the AWS Console by clicking on the "AWS Console" button.
 
 ## Deploy the Kubernetes Dashboard
 
@@ -204,6 +204,99 @@ Make sure you change your working directory to `~/environment` before starting t
 ### References
 * [Kubernetes Documentation - Managing Service Accounts](https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin/)
 
-# GitOps with Weave Flux
+## GitOps with Weave Flux
 
-TBD
+### GitHub Setup
+
+**Tip: Keep the Personal Access Token handy. Later in this module you will need to push changes back to GitHub, and this Personal Access Token can be used instead of your password. This will also bypass 2FA, if you have enabled it.**
+
+### Install Weave Flux
+
+Now we will use Helm to install Weave Flux into our cluster and enable it to interact with our Kubernetes configuration GitHub repo.
+
+First, install the Flux Custom Resource Definition:
+
+```sh
+kubectl apply -f https://raw.githubusercontent.com/fluxcd/helm-operator/master/deploy/crds.yaml
+```
+
+In the following steps, your Git user name will be required. Without this information, the resulting pipeline will not function as expected. Set this as an environment variable to reuse in the next commands. Update this to your git username.
+
+```sh
+YOURUSER=yourgitusername
+```
+
+First, create the flux Kubernetes namespace
+
+```sh
+kubectl create namespace flux
+```
+
+Next, add the Flux chart repository to Helm and install Flux, along with the Helm Operator. Update the Git URL below to match your Kubernetes configuration manifest repository, if you used a different name than the one suggested.
+
+```sh
+helm repo add fluxcd https://charts.fluxcd.io
+
+helm upgrade -i flux fluxcd/flux \
+--set git.url=git@github.com:${YOURUSER}/k8s-config \
+--namespace flux
+
+helm upgrade -i helm-operator fluxcd/helm-operator \
+--set helm.versions=v3 \
+--set git.ssh.secretName=flux-git-deploy \
+--namespace flux
+```
+
+Watch the install and confirm everything starts. There should be 3 pods.
+
+```sh
+kubectl get pods -n flux
+```
+
+Install fluxctl in order to get the SSH key to allow GitHub write access. This allows Flux to keep the configuration in GitHub in sync with the configuration deployed in the cluster.
+
+```sh
+sudo wget -O /usr/local/bin/fluxctl https://github.com/fluxcd/flux/releases/download/1.14.1/fluxctl_linux_amd64
+sudo chmod 755 /usr/local/bin/fluxctl
+
+fluxctl version
+fluxctl identity --k8s-fwd-ns flux
+```
+
+Copy the provided key and add that as a deploy key in the GitHub repository.
+
+* In GitHub, select your `k8s-config` GitHub repo. Go to **Settings** and click **Deploy Keys**.
+* Click on **Add Deploy Key**
+  * Name: **Flux Deploy Key**
+  * Paste the key output from fluxctl
+  * Click **Allow Write Access**. This allows Flux to keep the repo in sync with the real state of the cluster
+  * Click **Add Key**
+
+Now Flux is configured and should be ready to pull configuration.
+
+### Deploy from Manifests
+
+After creating the workloads manifest file, `k8s-config/workloads/eks-example-dep.yaml`, in addition to replacing `YOURACCOUNT` and `YOURTAG` in the image URI, the current region (`us-east-1`) will also need to be updated to the workshop region, `eu-central-1`. If you fetch the URL directly from the Amazon ECR Console, then it will already have the correct value.
+
+Also, when making a change to the eks-example source code, there is no need to use `vi` and make the changes from the termina. You can navigate to the file within Cloud9 and edit it using the integrated editor.
+
+### Deploy from Helm
+
+After creating the Helm release manifest file, `k8s-config/releases/nginx.yaml`, the `apiVersion` will need to be updated to `helm.fluxcd.io/v1`.
+
+### Cleanup
+
+To properly delete the kubernetes resources created, use the following commands instead:
+
+```sh
+helm uninstall helm-operator --namespace flux
+helm uninstall flux --namespace flux
+kubectl delete namespace flux 
+kubectl delete crd helmreleases.helm.fluxcd.io
+
+helm uninstall mywebserver -n nginx
+kubectl delete namespace nginx
+kubectl delete svc eks-example -n eks-example
+kubectl delete deployment eks-example -n eks-example
+kubectl delete namespace eks-example
+```
